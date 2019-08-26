@@ -1,0 +1,221 @@
+<!-- This file is part of Happyschool. -->
+<!--  -->
+<!-- Happyschool is the legal property of its developers, whose names -->
+<!-- can be found in the AUTHORS file distributed with this source -->
+<!-- distribution. -->
+<!--  -->
+<!-- Happyschool is free software: you can redistribute it and/or modify -->
+<!-- it under the terms of the GNU Affero General Public License as published by -->
+<!-- the Free Software Foundation, either version 3 of the License, or -->
+<!-- (at your option) any later version. -->
+<!--  -->
+<!-- Happyschool is distributed in the hope that it will be useful, -->
+<!-- but WITHOUT ANY WARRANTY; without even the implied warranty of -->
+<!-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the -->
+<!-- GNU Affero General Public License for more details. -->
+<!--  -->
+<!-- You should have received a copy of the GNU Affero General Public License -->
+<!-- along with Happyschool.  If not, see <http://www.gnu.org/licenses/>. -->
+
+<template>
+    <div>
+        <div class="loading" v-if="!loaded"></div>
+        <app-menu v-if="loaded" :menu-info="menuInfo"></app-menu>
+        <b-container v-if="loaded">
+            <h1>Retards des élèves</h1>
+            <b-row class="mb-1">
+                <b-col cols="8">
+                    <multiselect ref="input"
+                        :showNoOptions="false"
+                        :internal-search="false"
+                        :options="searchOptions"
+                        @search-change="getSearchOptions"
+                        :loading="searchLoading"
+                        placeholder="Rechercher un étudiant"
+                        select-label=""
+                        selected-label="Sélectionné"
+                        deselect-label=""
+                        label="display"
+                        track-by="matricule"
+                        v-model="search"
+                        >
+                        <span slot="noResult">Aucune personne trouvée.</span>
+                    </multiselect>
+                </b-col>
+                <b-col>
+                    <b-button :disabled="!search" @click="addStudent">Ajouter</b-button>
+                </b-col>
+            </b-row>
+            <b-row>
+                <b-col>
+                    <b-pagination class="mt-1" :total-rows="entriesCount" v-model="currentPage" @change="changePage" :per-page="20">
+                    </b-pagination>
+                </b-col>
+            </b-row>
+            <b-row>
+                <b-col>
+                    <lateness-entry v-for="lateness in latenesses" :key="lateness.id"
+                        :lateness="lateness" ref="entries" @delete="askDelete(lateness)">
+                    </lateness-entry>
+                </b-col>
+            </b-row>
+            <b-modal ref="deleteModal" cancel-title="Annuler" hide-header centered
+                @ok="deleteEntry" @cancel="currentEntry = null"
+                :no-close-on-backdrop="true" :no-close-on-esc="true">
+                Êtes-vous sûr de vouloir supprimer ce passage ?
+            </b-modal>
+        </b-container>
+    </div>
+</template>
+
+<script>
+import Vue from 'vue';
+import BootstrapVue from 'bootstrap-vue'
+import 'bootstrap-vue/dist/bootstrap-vue.css'
+
+Vue.use(BootstrapVue);
+
+import Multiselect from 'vue-multiselect'
+import 'vue-multiselect/dist/vue-multiselect.min.css'
+
+import 'vue-awesome/icons'
+import Icon from 'vue-awesome/components/Icon.vue'
+Vue.component('icon', Icon);
+
+import axios from 'axios';
+
+import Menu from 'assets/common/menu.vue'
+import LatenessEntry from './lateness_entry.vue'
+
+const token = { xsrfCookieName: 'csrftoken', xsrfHeaderName: 'X-CSRFToken'};
+
+export default {
+    data: function () {
+        return {
+            menuInfo: {},
+            loaded: false,
+            search: null,
+            searchId: -1,
+            searchOptions: [],
+            searchLoading: false,
+            latenesses: [],
+            entriesCount: 0,
+            currentPage: 1,
+            currentEntry: null,
+        }
+    },
+    methods: {
+        askDelete: function (entry) {
+            this.currentEntry = entry;
+            this.$refs.deleteModal.show();
+        },
+        deleteEntry: function () {
+            axios.delete('/lateness/api/lateness/' + this.currentEntry.id, token)
+            .then(response => {
+                this.loadEntries();
+            });
+
+            this.currentEntry = null;
+        },
+        getSearchOptions: function (query) {
+            // Ensure the last search is the first response.
+            this.searchId += 1;
+            let currentSearch = this.searchId;
+
+            const data = {
+                query: query,
+                teachings: this.$store.state.teachings,
+                people: 'student',
+                check_access: false,
+            };
+            axios.post('/annuaire/api/people/', data, token)
+            .then(response => {
+                if (this.searchId !== currentSearch)
+                    return;
+                
+                this.searchOptions = response.data;
+            })
+        },
+        overloadInput: function () {
+            setTimeout(() => {
+                // Check if input is loaded.
+                let refInput = this.$refs.input;
+                if (refInput) {
+                    let input = refInput.$refs.search;
+                    input.focus();
+                    input.addEventListener('keypress', (e) => {
+                        if (e.key == 'Enter') {
+                            if (refInput.search && refInput.search.length > 1 && !isNaN(refInput.search)) {
+                                axios.get('/annuaire/api/student/' + refInput.search + '/')
+                                .then(resp => {
+                                    if (resp.data) {
+                                        this.search = resp.data;
+                                        this.addStudent();
+                                        refInput.search = "";
+                                    }
+                                })
+                                .catch(err => {
+                                    console.log("Aucun étudiant trouvé");
+                                })
+                            }
+                        }
+                    })
+                    return input;
+                } else {
+                    this.overloadInput();
+                }
+            }, 300)
+            
+        },
+        addStudent: function () {
+            const data = {
+                student_id: this.search.matricule,
+            };
+            axios.post('/lateness/api/lateness/', data, token)
+            .then(response => {
+                // Reload entries.
+                this.search = null;
+                this.loadEntries();
+                setTimeout(() => {
+                    if (this.$refs.entries.length > 0) {
+                        this.$refs.entries[this.$refs.entries.length - 1].displayPhoto();
+                    }
+                }, 300);
+            })
+            .catch(err => {
+                alert(err);
+            })
+        },
+        loadEntries: function () {
+            axios.get('/lateness/api/lateness/?ordering=-datetime_creation&page=' + this.currentPage, token)
+            .then(response => {
+                this.latenesses = response.data.results;
+                this.entriesCount = response.data.count;
+                this.loaded = true;
+                
+            })
+            .catch(err => {
+                alert(err);
+                this.loaded = true;
+            })
+        },
+        changePage: function (page) {
+            this.currentPage = page;
+            this.loadEntries();
+            // Move to the top of the page.
+            scroll(0, 0);
+            return;
+        },
+    },
+    mounted: function () {
+        this.menuInfo = menu;
+        this.loadEntries();
+        this.overloadInput();
+    },
+    components: {
+        'multiselect': Multiselect,
+        'app-menu': Menu,
+        'lateness-entry': LatenessEntry,
+    }
+}
+</script>
