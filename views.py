@@ -33,6 +33,17 @@ from .models import LatenessSettingsModel, LatenessModel
 from .serializers import LatenessSettingsSerializer, LatenessSerializer
 
 
+def get_menu_entry(active_app, user):
+    if not user.has_perm('lateness.view_latenessmodel'):
+        return {}
+    return {
+            "app": "lateness",
+            "display": "Retards",
+            "url": "/lateness/",
+            "active": active_app == "lateness"
+    }
+
+
 def get_settings():
     settings_lateness = LatenessSettingsModel.objects.first()
     if not settings_lateness:
