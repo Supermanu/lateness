@@ -18,6 +18,7 @@
 # along with HappySchool.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
+import datetime
 
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
 from django.views.generic import TemplateView
@@ -87,16 +88,22 @@ class LatenessViewSet(BaseModelViewSet):
         lateness = serializer.save()
         #TODO Create lateness after sanction.
         if get_settings().trigger_sanction:
+            if len(LatenessModel.object.filter(student=lateness.student) % 3 != 0:
+                return
             from dossier_eleve.models import CasEleve, SanctionDecisionDisciplinaire
 
+            #1234 next wednesday.
+            #567 next tuesday.
             sanction = SanctionDecisionDisciplinaire.objects.first()
-            today_evening = lateness.datetime_creation.replace(hour=17, minute=0)
+            day = datetime.date.today()
+            temp_day = 9 if lateness.student.classe.year < 5 else 8
+            day += datetime.timedelta(days=(temp_day - day.isoweekday()) % 7 + 1) 
             cas = CasEleve.objects.create(matricule=lateness.student, name=lateness.student.display,
                                           demandeur=self.request.user.get_full_name(),
                                           sanction_decision=sanction,
                                           explication_commentaire="Ajout automatique.",
                                           sanction_faite=False,
-                                          datetime_sanction=today_evening,
+                                          datetime_sanction=day,
                                           created_by=self.request.user
                                           )
             cas.visible_by_groups.set(Group.objects.all())
