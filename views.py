@@ -23,6 +23,7 @@ import datetime
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
 from django.views.generic import TemplateView
 from django.contrib.auth.models import Group
+from django.db.models import ObjectDoesNotExist
 
 from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
 
@@ -114,7 +115,10 @@ class LatenessViewSet(BaseModelViewSet):
         if instance.sanction_id:
             from dossier_eleve.models import CasEleve
 
-            CasEleve.objects.get(id=instance.sanction_id).delete()
+            try:
+                CasEleve.objects.get(id=instance.sanction_id).delete()
+            except ObjectDoesNotExist:
+                pass
         super().perform_destroy(instance)
 
     def get_group_all_access(self):
