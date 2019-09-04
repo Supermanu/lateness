@@ -89,7 +89,7 @@ class LatenessViewSet(BaseModelViewSet):
         lateness = serializer.save()
         #TODO Create lateness after sanction.
         if get_settings().trigger_sanction:
-            if len(LatenessModel.object.filter(student=lateness.student) % 3 != 0:
+            if len(LatenessModel.object.filter(student=lateness.student)) % 3 != 0:
                 return
             from dossier_eleve.models import CasEleve, SanctionDecisionDisciplinaire
 
