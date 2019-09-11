@@ -27,6 +27,7 @@ class LatenessSettingsModel(models.Model):
     teachings = models.ManyToManyField(TeachingModel, default=None)
     all_access = models.ManyToManyField(Group, default=None, blank=True)
     trigger_sanction = models.BooleanField(default=False)
+    printer = models.CharField(max_length=200, blank=True)
 
 
 class LatenessModel(models.Model):

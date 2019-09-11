@@ -20,10 +20,13 @@
 import json
 import datetime
 
+from escpos.printer import Network
+
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
 from django.views.generic import TemplateView
 from django.contrib.auth.models import Group
 from django.db.models import ObjectDoesNotExist
+from django.utils import timezone
 
 from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
 
@@ -81,15 +84,31 @@ class LatenessViewSet(BaseModelViewSet):
     queryset = LatenessModel.objects.all()
     serializer_class = LatenessSerializer
     permission_classes = (IsAuthenticated, DjangoModelPermissions,)
-    #filter_class = LatenessFilter
     ordering_fields = ('datetime_update', 'datetime_creation',)
     username_field = None
 
     def perform_create(self, serializer):
         lateness = serializer.save()
+        if get_settings().printer:
+            print('coucou %s' % get_settings().printer)
+            printer = Network(get_settings().printer)
+            printer.charcode('USA')
+            printer.set(align='CENTER', text_type='B')
+            printer.text('\nRETARD\n')
+            printer.set(align='LEFT')
+            absence_dt = lateness.datetime_creation.astimezone(timezone.get_default_timezone())
+            printer.text('\n%s %s\n%s\n%s\nBonne journée !' % (
+                lateness.student.last_name,
+                lateness.student.first_name,
+                lateness.student.classe.compact_str,
+                absence_dt.strftime("%H:%M - %d/%m/%Y"),
+            ))
+            printer.cut()
+            printer.close()
+
         #TODO Create lateness after sanction.
         if get_settings().trigger_sanction:
-            if len(LatenessModel.object.filter(student=lateness.student)) % 3 != 0:
+            if len(LatenessModel.objects.filter(student=lateness.student)) % 3 != 0:
                 return
             from dossier_eleve.models import CasEleve, SanctionDecisionDisciplinaire
 
