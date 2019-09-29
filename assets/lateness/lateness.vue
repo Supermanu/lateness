@@ -24,6 +24,9 @@
         <b-container v-if="loaded">
             <h1>Retards des élèves</h1>
             <b-row class="mb-1">
+                <b-col cols="1">
+                    <b-btn @click="scanCode">Scanner</b-btn>
+                </b-col>
                 <b-col cols="8">
                     <multiselect ref="input"
                         :showNoOptions="false"
@@ -64,11 +67,17 @@
                 :no-close-on-backdrop="true" :no-close-on-esc="true">
                 Êtes-vous sûr de vouloir supprimer ce passage ?
             </b-modal>
+            <b-modal ref="scanModal" hide-header centered no-fade ok-only ok-title="Fermer"
+                size="lg" @hidden="closeQuagga">
+                <div id="interactive" class="viewport"></div>
+            </b-modal>
         </b-container>
     </div>
 </template>
 
 <script>
+import Quagga from '@ericblade/quagga2';
+
 import Vue from 'vue';
 import BootstrapVue from 'bootstrap-vue'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
@@ -102,6 +111,7 @@ export default {
             entriesCount: 0,
             currentPage: 1,
             currentEntry: null,
+            addingStudent: false,
         }
     },
     methods: {
@@ -136,6 +146,19 @@ export default {
                 this.searchOptions = response.data;
             })
         },
+        selectStudent: function (matricule) {
+            axios.get('/annuaire/api/student/' + matricule + '/')
+            .then(resp => {
+                if (resp.data) {
+                    this.search = resp.data;
+                    this.addStudent();
+                }
+            })
+            .catch(err => {
+                console.log("Aucun étudiant trouvé");
+                this.addingStudent = false;
+            })
+        },
         overloadInput: function () {
             setTimeout(() => {
                 // Check if input is loaded.
@@ -146,17 +169,8 @@ export default {
                     input.addEventListener('keypress', (e) => {
                         if (e.key == 'Enter') {
                             if (refInput.search && refInput.search.length > 1 && !isNaN(refInput.search)) {
-                                axios.get('/annuaire/api/student/' + refInput.search + '/')
-                                .then(resp => {
-                                    if (resp.data) {
-                                        this.search = resp.data;
-                                        this.addStudent();
-                                        refInput.search = "";
-                                    }
-                                })
-                                .catch(err => {
-                                    console.log("Aucun étudiant trouvé");
-                                })
+                                this.selectStudent(refInput.search);
+                                refInput.search = "";
                             }
                         }
                     })
@@ -173,6 +187,7 @@ export default {
             };
             axios.post('/lateness/api/lateness/', data, token)
             .then(response => {
+                this.addingStudent = false;
                 // Reload entries.
                 this.search = null;
                 this.loadEntries();
@@ -184,6 +199,7 @@ export default {
             })
             .catch(err => {
                 alert(err);
+                this.addingStudent = false;
             })
         },
         loadEntries: function () {
@@ -206,11 +222,65 @@ export default {
             scroll(0, 0);
             return;
         },
+        closeQuagga: function () {
+            Quagga.stop();
+        },
+        scanCode: function () {
+            let vueApp = this;
+            vueApp.$refs.scanModal.show();
+            setTimeout(() => {
+                var App = {
+                    init: function() {
+                        var self = this;
+
+                        Quagga.init(this.state, function(err) {
+                            if (err) {
+                                return self.handleError(err);
+                            }
+                            Quagga.start();
+                        });
+                    },
+                    handleError: function(err) {
+                        console.log(err);
+                    },
+                    state: {
+                        inputStream: {
+                            type : "LiveStream",
+                            constraints: {
+                                width: {min: 640},
+                                height: {min: 480},
+                                facingMode: "environment",
+                                aspectRatio: {min: 1, max: 2}
+                            }
+                        },
+                        numOfWorkers: 2,
+                        frequency: 10,
+                        decoder: {
+                            readers : [{
+                                format: "code_128_reader",
+                                config: {}
+                            }]
+                        },
+                    },
+                };
+
+                App.init();
+
+                Quagga.onDetected(function(result) {
+                    if (vueApp.addingStudent) return;
+                    vueApp.addingStudent = true;
+                    const code = result.codeResult.code;
+                    Quagga.stop();
+                    vueApp.$refs.scanModal.hide();
+                    vueApp.selectStudent(code);
+                });
+            }, 300);
+        }
     },
     mounted: function () {
         this.menuInfo = menu;
         this.loadEntries();
-        this.overloadInput();
+        this.overloadInput();        
     },
     components: {
         'multiselect': Multiselect,
@@ -219,3 +289,15 @@ export default {
     }
 }
 </script>
+
+<style>
+.viewport {
+    max-height: 480px;
+}
+
+video {
+    width: 640px;
+    margin: auto;
+    display: block
+}
+</style>
