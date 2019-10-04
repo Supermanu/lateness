@@ -296,10 +296,4 @@ export default {
 .viewport {
     max-height: 640px;
 }
-
-video {
-    width: 640px;
-    margin: auto;
-    display: block
-}
 </style>
