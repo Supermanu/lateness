@@ -24,9 +24,6 @@
         <b-container v-if="loaded">
             <h1>Retards des élèves</h1>
             <b-row class="mb-1">
-                <b-col cols="1">
-                    <b-btn @click="scanCode">Scanner</b-btn>
-                </b-col>
                 <b-col cols="8">
                     <multiselect ref="input"
                         :showNoOptions="false"
@@ -48,6 +45,9 @@
                 <b-col>
                     <b-button :disabled="!search" @click="addStudent">Ajouter</b-button>
                 </b-col>
+                <b-col>
+                    <b-btn @click="scanCode">Scanner</b-btn>
+                </b-col>
             </b-row>
             <b-row>
                 <b-col>
@@ -67,8 +67,8 @@
                 :no-close-on-backdrop="true" :no-close-on-esc="true">
                 Êtes-vous sûr de vouloir supprimer ce passage ?
             </b-modal>
-            <b-modal ref="scanModal" hide-header centered no-fade ok-only ok-title="Fermer"
-                size="lg" @hidden="closeQuagga">
+            <b-modal ref="scanModal" hide-footer centered no-fade
+                size="xl" @hidden="closeQuagga">
                 <div id="interactive" class="viewport"></div>
             </b-modal>
         </b-container>
@@ -187,6 +187,8 @@ export default {
             };
             axios.post('/lateness/api/lateness/', data, token)
             .then(response => {
+                if (response.data.sanction_id) this.$bvToast.toast('Une retenue a été ajoutée !',
+                {title: 'Sanction !'});
                 this.addingStudent = false;
                 // Reload entries.
                 this.search = null;
@@ -292,7 +294,7 @@ export default {
 
 <style>
 .viewport {
-    max-height: 480px;
+    max-height: 640px;
 }
 
 video {

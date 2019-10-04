@@ -25,10 +25,12 @@
                     <b-img :src="`/static/photos/${lateness.student_id}.jpg`" fluid alt="Responsive image"></b-img>
                 </b-col>
                 <b-col>
+                    <icon v-if="lateness.sanction_id" name="exclamation-circle" class="align-text-bottom"></icon>
                     <strong>{{ niceDate }}</strong>:
                     <a :href='`/annuaire/#/person/student/${lateness.student.matricule}/`'>
                         {{ lateness.student.display }}
                     </a>
+                    <b-badge  v-b-tooltip.hover title="Nombre de retards">{{ lateness.lateness_count }}</b-badge>
                 </b-col>
                 <b-col sm="2">
                     <div class="text-right">

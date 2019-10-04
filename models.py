@@ -37,3 +37,7 @@ class LatenessModel(models.Model):
                                              auto_now_add=True)
     datetime_update = models.DateTimeField("Date et heure de mise à jour du retard",
                                            auto_now=True)
+    
+    @property
+    def lateness_count(self):
+        return LatenessModel.objects.filter(student=self.student).count()

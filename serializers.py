@@ -39,4 +39,5 @@ class LatenessSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = LatenessModel
-        fields = ('id', 'student', 'student_id', 'datetime_creation',)
+        fields = ('id', 'student', 'student_id', 'datetime_creation', 'sanction_id',
+                  'lateness_count',)
