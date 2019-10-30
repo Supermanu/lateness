@@ -94,14 +94,15 @@ class LatenessViewSet(BaseModelViewSet):
                 printer = Network(get_settings().printer)
                 printer.charcode('USA')
                 printer.set(align='CENTER', text_type='B')
-                printer.text('\nRETARD\n')
+                printer.text('RETARD\n')
                 printer.set(align='LEFT')
                 absence_dt = lateness.datetime_creation.astimezone(timezone.get_default_timezone())
-                printer.text('\n%s %s\n%s\n%s\nBonne journée !' % (
+                printer.text('\n%s %s\n%s\n%s\nNombre de retards: %i\nBonne journée !' % (
                     lateness.student.last_name,
                     lateness.student.first_name,
                     lateness.student.classe.compact_str,
                     absence_dt.strftime("%H:%M - %d/%m/%Y"),
+                    LatenessModel.objects.filter(student=lateness.student).count()
                 ))
                 printer.cut()
                 printer.close()
