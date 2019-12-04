@@ -89,7 +89,8 @@ class LatenessViewSet(BaseModelViewSet):
 
     def perform_create(self, serializer):
         lateness = serializer.save()
-        if get_settings().printer:
+        printing = self.request.query_params.get('print', None)
+        if get_settings().printer and printing:
             try:
                 printer = Network(get_settings().printer)
                 printer.charcode('USA')

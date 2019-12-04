@@ -43,10 +43,22 @@
                     </multiselect>
                 </b-col>
                 <b-col>
-                    <b-button :disabled="!search" @click="addStudent">Ajouter</b-button>
+                    <b-button :disabled="!search || addingStudent" @click="addStudent">
+                        <icon v-if="addingStudent" name="spinner" scale="1" spin class="align-baseline"></icon>
+                        Ajouter
+                    </b-button>
                 </b-col>
                 <b-col>
                     <b-btn @click="scanCode">Scanner</b-btn>
+                </b-col>
+            </b-row>
+            <b-row v-if="$store.state.settings.printer.length > 0">
+                <b-col cols="4">
+                    <b-card bg-variant="light" no-body class="p-2">
+                    <b-form-checkbox v-model="printing">
+                        Imprimer le retard
+                    </b-form-checkbox>
+                    </b-card>
                 </b-col>
             </b-row>
             <b-row>
@@ -112,6 +124,7 @@ export default {
             currentPage: 1,
             currentEntry: null,
             addingStudent: false,
+            printing: true,
         }
     },
     methods: {
@@ -185,7 +198,10 @@ export default {
             const data = {
                 student_id: this.search.matricule,
             };
-            axios.post('/lateness/api/lateness/', data, token)
+            let url = '/lateness/api/lateness/';
+            if (this.printing) url += '?print=1';
+            this.addingStudent = true;
+            axios.post(url, data, token)
             .then(response => {
                 if (response.data.sanction_id) this.$bvToast.toast('Une retenue a été ajoutée !',
                 {title: 'Sanction !'});
