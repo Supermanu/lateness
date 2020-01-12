@@ -22,7 +22,7 @@
         <b-card @click="displayPhoto">
             <b-row>
                 <b-col cols="2" v-if="showPhoto">
-                    <b-img :src="`/static/photos/${lateness.student_id}.jpg`" fluid alt="Responsive image"></b-img>
+                    <b-img :src="`/static/photos/${lateness.student_id}.jpg`" fluid alt="Photo de l'élève"></b-img>
                 </b-col>
                 <b-col>
                     <icon v-if="lateness.sanction_id" name="exclamation-circle" class="align-text-bottom"></icon>
@@ -30,7 +30,14 @@
                     <a :href='`/annuaire/#/person/student/${lateness.student.matricule}/`'>
                         {{ lateness.student.display }}
                     </a>
-                    <b-badge  v-b-tooltip.hover title="Nombre de retards">{{ lateness.lateness_count }}</b-badge>
+                    <b-badge
+                        v-if="!lateness.justified"
+                        v-b-tooltip.hover
+                        title="Nombre de retards"
+                    >
+                        {{ lateness.lateness_count }}
+                    </b-badge>
+                    <strong v-else>Absence justifié</strong>
                 </b-col>
                 <b-col sm="2">
                     <div class="text-right">

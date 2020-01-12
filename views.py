@@ -20,13 +20,14 @@
 import json
 import datetime
 
-from escpos.printer import Network
+from escpos.printer import Network, Dummy
 
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
 from django.views.generic import TemplateView
 from django.contrib.auth.models import Group
 from django.db.models import ObjectDoesNotExist
 from django.utils import timezone
+from django.conf import settings
 
 from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
 
@@ -92,27 +93,38 @@ class LatenessViewSet(BaseModelViewSet):
         printing = self.request.query_params.get('print', None)
         if get_settings().printer and printing:
             try:
-                printer = Network(get_settings().printer)
+                printer = Network(get_settings().printer) if not settings.DEBUG else Dummy()
                 printer.charcode('USA')
                 printer.set(align='CENTER', text_type='B')
                 printer.text('RETARD\n')
                 printer.set(align='LEFT')
                 absence_dt = lateness.datetime_creation.astimezone(timezone.get_default_timezone())
-                printer.text('\n%s %s\n%s\n%s\nNombre de retards: %i\nBonne journée !' % (
+
+                print(lateness.justified)
+                count_or_justified = "Absence justifié" if lateness.justified else "Nombre de retards: "
+                if lateness.justified:
+                    count_or_justified += "%i" % LatenessModel.objects.filter(
+                        student=lateness.student,
+                        justified=False
+                    ).count()
+
+                printer.text('\n%s %s\n%s\n%s\n%s\nBonne journée !' % (
                     lateness.student.last_name,
                     lateness.student.first_name,
                     lateness.student.classe.compact_str,
                     absence_dt.strftime("%H:%M - %d/%m/%Y"),
-                    LatenessModel.objects.filter(student=lateness.student).count()
+                    count_or_justified
                 ))
+                if settings.DEBUG:
+                    print(printer.output)
                 printer.cut()
                 printer.close()
             except OSError:
                 pass
 
         #TODO Create lateness after sanction.
-        if get_settings().trigger_sanction:
-            if len(LatenessModel.objects.filter(student=lateness.student)) % 3 != 0:
+        if get_settings().trigger_sanction and not lateness.justified:
+            if len(LatenessModel.objects.filter(student=lateness.student, justified=False)) % 3 != 0:
                 return
             from dossier_eleve.models import CasEleve, SanctionDecisionDisciplinaire
 
@@ -133,7 +145,7 @@ class LatenessViewSet(BaseModelViewSet):
             cas.visible_by_groups.set(Group.objects.all())
             lateness.sanction_id = cas.id
             lateness.save()
-    
+
     def perform_destroy(self, instance):
         if instance.sanction_id:
             from dossier_eleve.models import CasEleve

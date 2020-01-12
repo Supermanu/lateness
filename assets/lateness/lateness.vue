@@ -24,7 +24,7 @@
         <b-container v-if="loaded">
             <h1>Retards des élèves</h1>
             <b-row class="mb-1">
-                <b-col cols="8">
+                <b-col sm="12" md="8">
                     <multiselect ref="input"
                         :showNoOptions="false"
                         :internal-search="false"
@@ -42,21 +42,28 @@
                         <span slot="noResult">Aucune personne trouvée.</span>
                     </multiselect>
                 </b-col>
-                <b-col>
+                <b-col cols="3" sm="2" class="mt-1 mt-md-0">
                     <b-button :disabled="!search || addingStudent" @click="addStudent">
                         <icon v-if="addingStudent" name="spinner" scale="1" spin class="align-baseline"></icon>
                         Ajouter
                     </b-button>
                 </b-col>
-                <b-col>
+                <b-col cols="3" sm="2" class="mt-1 mt-md-0">
                     <b-btn @click="scanCode">Scanner</b-btn>
                 </b-col>
             </b-row>
             <b-row v-if="$store.state.settings.printer.length > 0">
-                <b-col cols="4">
+                <b-col cols="6" md="4">
                     <b-card bg-variant="light" no-body class="p-2">
                     <b-form-checkbox v-model="printing">
                         Imprimer le retard
+                    </b-form-checkbox>
+                    </b-card>
+                </b-col>
+                <b-col cols="6" md="4">
+                    <b-card bg-variant="light" no-body class="p-2">
+                    <b-form-checkbox v-model="justified">
+                        Retard justifié
                     </b-form-checkbox>
                     </b-card>
                 </b-col>
@@ -125,6 +132,7 @@ export default {
             currentEntry: null,
             addingStudent: false,
             printing: true,
+            justified: false,
         }
     },
     methods: {
@@ -197,6 +205,7 @@ export default {
         addStudent: function () {
             const data = {
                 student_id: this.search.matricule,
+                justified: this.justified
             };
             let url = '/lateness/api/lateness/';
             if (this.printing) url += '?print=1';

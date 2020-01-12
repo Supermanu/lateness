@@ -33,11 +33,12 @@ class LatenessSettingsModel(models.Model):
 class LatenessModel(models.Model):
     student = models.ForeignKey(StudentModel, on_delete=models.SET_NULL, null=True)
     sanction_id = models.PositiveIntegerField(null=True, blank=True)
+    justified = models.BooleanField(default=False)
     datetime_creation = models.DateTimeField("Date et heure de création du retard",
                                              auto_now_add=True)
     datetime_update = models.DateTimeField("Date et heure de mise à jour du retard",
                                            auto_now=True)
-    
+
     @property
     def lateness_count(self):
-        return LatenessModel.objects.filter(student=self.student).count()
+        return LatenessModel.objects.filter(student=self.student, justified=False).count()
