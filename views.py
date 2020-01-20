@@ -131,9 +131,10 @@ class LatenessViewSet(BaseModelViewSet):
             #1234 next wednesday.
             #567 next tuesday.
             sanction = SanctionDecisionDisciplinaire.objects.first()
-            day = datetime.date.today()
+            day = datetime.datetime.today()
             temp_day = 9 if lateness.student.classe.year < 5 else 8
-            day += datetime.timedelta(days=(temp_day - day.isoweekday()) % 7 + 1) 
+            day += datetime.timedelta(days=(temp_day - day.isoweekday()) % 7 + 1)
+            day = day.replace(hour=16, minute=0, second=0)
             cas = CasEleve.objects.create(matricule=lateness.student, name=lateness.student.display,
                                           demandeur=self.request.user.get_full_name(),
                                           sanction_decision=sanction,
