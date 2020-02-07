@@ -100,9 +100,8 @@ class LatenessViewSet(BaseModelViewSet):
                 printer.set(align='LEFT')
                 absence_dt = lateness.datetime_creation.astimezone(timezone.get_default_timezone())
 
-                print(lateness.justified)
-                count_or_justified = "Absence justifié" if lateness.justified else "Nombre de retards: "
-                if lateness.justified:
+                count_or_justified = "Retard justifié" if lateness.justified else "Nombre de retards: "
+                if not lateness.justified:
                     count_or_justified += "%i" % LatenessModel.objects.filter(
                         student=lateness.student,
                         justified=False
