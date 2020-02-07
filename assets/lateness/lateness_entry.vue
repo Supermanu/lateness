@@ -37,7 +37,7 @@
                     >
                         {{ lateness.lateness_count }}
                     </b-badge>
-                    <strong v-else>Absence justifié</strong>
+                    <strong v-else>Retard justifié</strong>
                 </b-col>
                 <b-col sm="2">
                     <div class="text-right">
