@@ -25,7 +25,11 @@
                     <b-img :src="`/static/photos/${lateness.student_id}.jpg`" fluid alt="Photo de l'élève"></b-img>
                 </b-col>
                 <b-col>
-                    <icon v-if="lateness.sanction_id" name="exclamation-circle" class="align-text-bottom"></icon>
+                    <icon
+                        v-if="lateness.sanction_id"
+                        name="exclamation-circle"
+                        class="align-text-bottom"
+                    />
                     <strong>{{ niceDate }}</strong>:
                     <a :href='`/annuaire/#/person/student/${lateness.student.matricule}/`'>
                         {{ lateness.student.display }}
@@ -41,9 +45,41 @@
                 </b-col>
                 <b-col sm="2">
                     <div class="text-right">
-                        <b-btn variant="light" size="sm" @click="$emit('delete')"
-                        class="card-link"><icon scale="1.3" name="trash" color="red" class="align-text-bottom"></icon></b-btn>
+                        <b-btn
+                            variant="light"
+                            size="sm"
+                            @click="$emit('delete')"
+                            class="card-link"
+                        >
+                            <icon
+                                scale="1.3"
+                                name="trash"
+                                color="red"
+                                class="align-text-bottom"
+                            />
+                        </b-btn>
                     </div>
+                </b-col>
+            </b-row>
+            <b-row v-if="sanction">
+                <b-col>
+                    Date de la sanction : {{ sanction.date_sanction }}
+                    <span v-if="!sanction.to_be_done">
+                        <icon
+                            v-if="sanction.sanction_faite"
+                            name="check"
+                            color="green"
+                            v-b-tooltip.hover
+                            title="Sanction faite"
+                        />
+                        <icon
+                            v-else
+                            name="times"
+                            color="red"
+                            v-b-tooltip.hover
+                            title="Sanction non-faite"
+                        />
+                    </span>
                 </b-col>
             </b-row>
         </b-card>
@@ -52,6 +88,8 @@
 
 <script>
 import Vue from 'vue';
+
+import axios from "axios";
 
 import Moment from 'moment';
 Moment.locale('fr');
@@ -65,6 +103,7 @@ export default {
     data: function () {
         return {
             showPhoto: false,
+            sanction: null,
         }
     },
     computed: {
@@ -80,5 +119,28 @@ export default {
             }, 5000);
         }
     },
+    mounted: function () {
+        if (!this.lateness.sanction_id) return;
+
+        axios.get("/dossier_eleve/api/cas_eleve/" + this.lateness.sanction_id + "/")
+            .then(resp => {
+                this.sanction = {
+                    date_sanction: Moment(resp.data.datetime_sanction).format("DD/MM/YY"),
+                    sanction_faite: true,
+                    to_be_done: false
+                };
+            }
+            )
+            .catch(() => {
+                axios.get("/dossier_eleve/api/ask_sanctions/" + this.lateness.sanction_id + "/")
+                    .then(resp => {
+                        this.sanction = {
+                            date_sanction: Moment(resp.data.datetime_sanction).format("DD/MM/YY"),
+                            sanction_faite: false,
+                            to_be_done: Moment(resp.data.datetime_sanction) > Moment()
+                        };
+                    });
+            });
+    }
 }
 </script>
