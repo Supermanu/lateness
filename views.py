@@ -88,6 +88,9 @@ class LatenessViewSet(BaseModelViewSet):
     ordering_fields = ('datetime_update', 'datetime_creation',)
     username_field = None
 
+    def get_queryset(self):
+        return self.queryset.filter(datetime_creation__gte=get_settings().date_count_start)
+
     def perform_create(self, serializer):
         lateness = serializer.save()
         printing = self.request.query_params.get('print', None)
@@ -102,7 +105,7 @@ class LatenessViewSet(BaseModelViewSet):
 
                 count_or_justified = "Retard justifié" if lateness.justified else "Nombre de retards: "
                 if not lateness.justified:
-                    count_or_justified += "%i" % LatenessModel.objects.filter(
+                    count_or_justified += "%i" % self.get_queryset().filter(
                         student=lateness.student,
                         justified=False
                     ).count()
@@ -123,7 +126,7 @@ class LatenessViewSet(BaseModelViewSet):
 
         #TODO Create lateness after sanction.
         if get_settings().trigger_sanction and not lateness.justified:
-            if len(LatenessModel.objects.filter(student=lateness.student, justified=False)) % 3 != 0:
+            if len(self.get_queryset().filter(student=lateness.student, justified=False)) % 3 != 0:
                 return
             from dossier_eleve.models import CasEleve, SanctionDecisionDisciplinaire
 

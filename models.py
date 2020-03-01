@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with HappySchool.  If not, see <http://www.gnu.org/licenses/>.
 
+from datetime import date
+
 from django.db import models
 from django.contrib.auth.models import User, Group
 
@@ -28,6 +30,7 @@ class LatenessSettingsModel(models.Model):
     all_access = models.ManyToManyField(Group, default=None, blank=True)
     trigger_sanction = models.BooleanField(default=False)
     printer = models.CharField(max_length=200, blank=True)
+    date_count_start = models.DateField(default=date(year=2019, month=9, day=1))
 
 
 class LatenessModel(models.Model):
@@ -41,4 +44,8 @@ class LatenessModel(models.Model):
 
     @property
     def lateness_count(self):
-        return LatenessModel.objects.filter(student=self.student, justified=False).count()
+        settings = LatenessSettingsModel.objects.first()
+        return LatenessModel.objects.filter(
+            student=self.student,
+            justified=False,
+            datetime_creation__gte=settings.date_count_start).count()
