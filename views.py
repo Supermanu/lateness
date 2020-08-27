@@ -34,6 +34,7 @@ from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
 from core.models import TeachingModel
 from core.utilities import get_menu
 from core.views import BaseModelViewSet
+from core.email import get_resp_emails, send_email
 
 from .models import LatenessSettingsModel, LatenessModel
 from .serializers import LatenessSettingsSerializer, LatenessSerializer
@@ -58,7 +59,6 @@ def get_settings():
         if TeachingModel.objects.count() == 1:
             settings_lateness.teachings.add(TeachingModel.objects.first())
         settings_lateness.save()
-
 
     return settings_lateness
 
@@ -123,6 +123,16 @@ class LatenessViewSet(BaseModelViewSet):
                 printer.close()
             except OSError:
                 pass
+
+        if get_settings().notify_responsible:
+            responsibles = get_resp_emails(lateness.student)
+            context = {"lateness": lateness}
+            send_email(
+                responsibles,
+                "[Retard]  %s %s" % (lateness.student.fullname, lateness.student.classe.compact_str),
+                "lateness/lateness_email.html",
+                context=context
+            )
 
         #TODO Create lateness after sanction.
         if get_settings().trigger_sanction and not lateness.justified:
