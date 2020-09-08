@@ -52,15 +52,25 @@
                     <b-btn @click="scanCode">Scanner</b-btn>
                 </b-col>
             </b-row>
-            <b-row v-if="$store.state.settings.printer.length > 0">
-                <b-col cols="6" md="4">
-                    <b-card bg-variant="light" no-body class="p-2">
-                    <b-form-checkbox v-model="printing">
-                        Imprimer le retard
-                    </b-form-checkbox>
+            <b-row>
+                <b-col
+                    v-if="$store.state.settings.printer.length > 0"
+                    cols="6"
+                    md="4"
+                >
+                    <b-card
+                        bg-variant="light"
+                        no-body class="p-2"
+                    >
+                        <b-form-checkbox v-model="printing">
+                            Imprimer le retard
+                        </b-form-checkbox>
                     </b-card>
                 </b-col>
-                <b-col cols="6" md="4">
+                <b-col
+                    cols="6"
+                    md="4"
+                >
                     <b-card bg-variant="light" no-body class="p-2">
                     <b-form-checkbox v-model="justified">
                         Retard justifié
