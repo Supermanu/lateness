@@ -41,10 +41,17 @@
                     >
                         {{ lateness.lateness_count }}
                     </b-badge>
-                    <strong v-else>Retard justifié</strong>
                 </b-col>
                 <b-col sm="2">
-                    <div class="text-right">
+                    <div class="text-right d-flex">
+                        <b-form-checkbox
+                            v-model="lateness.justified"
+                            switch
+                            class="pr-2"
+                            @input="updateJustified"
+                        >
+                            {{ lateness.justified ? "Justifié" : "Injustifié" }}
+                        </b-form-checkbox>
                         <b-btn
                             variant="light"
                             size="sm"
@@ -98,6 +105,8 @@ import 'vue-awesome/icons'
 import Icon from 'vue-awesome/components/Icon.vue'
 Vue.component('icon', Icon);
 
+const token = { xsrfCookieName: 'csrftoken', xsrfHeaderName: 'X-CSRFToken'};
+
 export default {
     props: ["lateness"],
     data: function () {
@@ -117,6 +126,9 @@ export default {
             setTimeout(() => {
                 this.showPhoto = false;
             }, 5000);
+        },
+        updateJustified: function (event) {
+            axios.put(`/lateness/api/lateness/${this.lateness.id}/`, {justified: event}, token);
         }
     },
     mounted: function () {
