@@ -24,8 +24,12 @@
         <b-container v-if="loaded">
             <h1>Retards des élèves</h1>
             <b-row class="mb-1">
-                <b-col sm="12" md="8">
-                    <multiselect ref="input"
+                <b-col
+                    sm="12"
+                    :md="$store.state.settings.enable_camera_scan ? '8' : '10' "
+                >
+                    <multiselect
+                        ref="input"
                         :showNoOptions="false"
                         :internal-search="false"
                         :options="searchOptions"
@@ -38,7 +42,7 @@
                         label="display"
                         track-by="matricule"
                         v-model="search"
-                        >
+                    >
                         <span slot="noResult">Aucune personne trouvée.</span>
                     </multiselect>
                 </b-col>
@@ -48,7 +52,12 @@
                         Ajouter
                     </b-button>
                 </b-col>
-                <b-col cols="3" sm="2" class="mt-1 mt-md-0">
+                <b-col
+                    v-if="$store.state.settings.enable_camera_scan"
+                    cols="3"
+                    sm="2"
+                    class="mt-1 mt-md-0"
+                >
                     <b-btn @click="scanCode">Scanner</b-btn>
                 </b-col>
             </b-row>

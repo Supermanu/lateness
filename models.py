@@ -32,6 +32,7 @@ class LatenessSettingsModel(models.Model):
     printer = models.CharField(max_length=200, blank=True)
     date_count_start = models.DateField(default=date(year=2019, month=9, day=1))
     notify_responsible = models.BooleanField(default=False)
+    enable_camera_scan = models.BooleanField(default=False)
 
 
 class LatenessModel(models.Model):
