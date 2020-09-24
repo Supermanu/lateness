@@ -226,27 +226,29 @@ export default {
                 student_id: this.search.matricule,
                 justified: this.justified
             };
-            let url = '/lateness/api/lateness/';
-            if (this.printing) url += '?print=1';
+            let url = "/lateness/api/lateness/";
+            if (this.printing) url += "?print=1";
             this.addingStudent = true;
             axios.post(url, data, token)
-            .then(response => {
-                if (response.data.sanction_id) this.$bvToast.toast('Une retenue a été ajoutée !',
-                {title: 'Sanction !'});
-                this.addingStudent = false;
-                // Reload entries.
-                this.search = null;
-                this.loadEntries();
-                setTimeout(() => {
-                    if (this.$refs.entries.length > 0) {
-                        this.$refs.entries[this.$refs.entries.length - 1].displayPhoto();
-                    }
-                }, 300);
-            })
-            .catch(err => {
-                alert(err);
-                this.addingStudent = false;
-            })
+                .then(response => {
+                    if (response.data.has_sanction) this.$bvToast.toast(
+                        `Une sanction ${response.data.sanction_id ? "a été" : "doit être"} ajoutée !`,
+                        {title: "Sanction !"}
+                    );
+                    this.addingStudent = false;
+                    // Reload entries.
+                    this.search = null;
+                    this.loadEntries();
+                    setTimeout(() => {
+                        if (this.$refs.entries.length > 0) {
+                            this.$refs.entries[this.$refs.entries.length - 1].displayPhoto();
+                        }
+                    }, 300);
+                })
+                .catch(err => {
+                    alert(err);
+                    this.addingStudent = false;
+                });
         },
         loadEntries: function () {
             axios.get('/lateness/api/lateness/?ordering=-datetime_creation&page=' + this.currentPage, token)

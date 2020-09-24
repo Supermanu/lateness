@@ -22,21 +22,51 @@ from datetime import date
 from django.db import models
 from django.contrib.auth.models import User, Group
 
-from core.models import StudentModel, TeachingModel
+from core.models import StudentModel, TeachingModel, YearModel
 
 
 class LatenessSettingsModel(models.Model):
     teachings = models.ManyToManyField(TeachingModel, default=None)
     all_access = models.ManyToManyField(Group, default=None, blank=True)
-    trigger_sanction = models.BooleanField(default=False)
     printer = models.CharField(max_length=200, blank=True)
     date_count_start = models.DateField(default=date(year=2019, month=9, day=1))
     notify_responsible = models.BooleanField(default=False)
     enable_camera_scan = models.BooleanField(default=False)
 
 
+class SanctionTriggerModel(models.Model):
+    WEEK_DAY_CHOICES = [
+        (1, "Lundi"),
+        (2, "Mardi"),
+        (3, "Mercredi"),
+        (4, "Jeudi"),
+        (5, "Vendredi"),
+        (6, "Samedi"),
+    ]
+    teaching = models.ForeignKey(TeachingModel, on_delete=models.CASCADE)
+    sanction_id = models.PositiveIntegerField(null=True, blank=True)
+    lateness_count_trigger = models.PositiveSmallIntegerField(default=3)
+    year = models.ManyToManyField(YearModel, blank=True)
+    only_warn = models.BooleanField(default=False)
+    next_week_day = models.PositiveSmallIntegerField(choices=WEEK_DAY_CHOICES, null=True, blank=True)
+    delay = models.PositiveSmallIntegerField(
+        default=1,
+        help_text="""Le nombre de jour avant de postposer la sanction à la semaine d'après.
+        Par exemple, pour une valeur de 1, si le retard qui déclenche la sanction a lieu
+        le même jour de la semaine que la sanction, la sanction sera mise la semaine prochaine
+        parce qu'il y a moins de 1 jour de différence. Au contraire, si le retard à lieu 1 jour
+        avant le jour de sanction, la sanction sera mise le lendemain.""",
+        null=True, blank=True
+    )
+    sanction_time = models.TimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.WEEK_DAY_CHOICES[self.next_week_day][1]} tous les {self.lateness_count_trigger} retards"
+
+
 class LatenessModel(models.Model):
     student = models.ForeignKey(StudentModel, on_delete=models.SET_NULL, null=True)
+    has_sanction = models.BooleanField(default=False)
     sanction_id = models.PositiveIntegerField(null=True, blank=True)
     justified = models.BooleanField(default=False)
     datetime_creation = models.DateTimeField("Date et heure de création du retard",

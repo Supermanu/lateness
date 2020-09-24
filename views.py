@@ -36,7 +36,7 @@ from core.utilities import get_menu
 from core.views import BaseModelViewSet
 from core.email import get_resp_emails, send_email
 
-from .models import LatenessSettingsModel, LatenessModel
+from .models import LatenessSettingsModel, LatenessModel, SanctionTriggerModel
 from .serializers import LatenessSettingsSerializer, LatenessSerializer
 
 
@@ -100,7 +100,6 @@ class LatenessViewSet(BaseModelViewSet):
         lateness_count = self.get_queryset().filter(
             student=lateness.student,
             justified=False,
-            datetime_creation__gte=lateness_settings.date_count_start
         ).count()
 
         if lateness_settings.printer and printing:
@@ -130,40 +129,52 @@ class LatenessViewSet(BaseModelViewSet):
             except OSError:
                 pass
 
-        if get_settings().notify_responsible:
+        for trigger in SanctionTriggerModel.objects.filter(
+            teaching=lateness.student.teaching,
+            year__year=lateness.student.classe.year
+        ):
+            if self.get_queryset().filter(
+                student=lateness.student,
+                justified=False
+            ).count() % trigger.lateness_count_trigger != 0:
+                continue
+
+            lateness.has_sanction = True
+            if trigger.only_warn:
+                lateness.save()
+                continue
+            from dossier_eleve.models import CasEleve, SanctionDecisionDisciplinaire
+
+            sanction = SanctionDecisionDisciplinaire.objects.get(id=trigger.sanction_id)
+            today = datetime.datetime.today()
+            day_shift = 6 + trigger.next_week_day
+            day = today + datetime.timedelta(days=(day_shift - today.isoweekday()) % (6 + trigger.delay) + 1)
+            day.replace(hour=trigger.sanction_time.hour, minute=trigger.sanction_time.minute)
+            cas = CasEleve.objects.create(
+                matricule=lateness.student, name=lateness.student.display,
+                demandeur=self.request.user.get_full_name(),
+                sanction_decision=sanction,
+                explication_commentaire="Sanction pour cause de retard.",
+                sanction_faite=False,
+                datetime_sanction=day,
+                created_by=self.request.user
+            )
+            cas.visible_by_groups.set(Group.objects.all())
+            lateness.sanction_id = cas.id
+            lateness.save()
+
+        if lateness_settings.notify_responsible:
             responsibles = get_resp_emails(lateness.student)
             context = {"lateness": lateness, "lateness_count": lateness_count}
             send_email(
                 responsibles,
-                "[Retard]  %s %s" % (lateness.student.fullname, lateness.student.classe.compact_str),
+                "[Retard]%s  %s %s" % (
+                    "[Sanction]" if lateness.has_sanction else "",
+                    lateness.student.fullname, lateness.student.classe.compact_str
+                ),
                 "lateness/lateness_email.html",
                 context=context
             )
-
-        #TODO Create lateness after sanction.
-        if get_settings().trigger_sanction and not lateness.justified:
-            if len(self.get_queryset().filter(student=lateness.student, justified=False)) % 3 != 0:
-                return
-            from dossier_eleve.models import CasEleve, SanctionDecisionDisciplinaire
-
-            #1234 next wednesday.
-            #567 next tuesday.
-            sanction = SanctionDecisionDisciplinaire.objects.first()
-            day = datetime.datetime.today()
-            temp_day = 9 if lateness.student.classe.year < 5 else 8
-            day += datetime.timedelta(days=(temp_day - day.isoweekday()) % 7 + 1)
-            day = day.replace(hour=16, minute=0, second=0)
-            cas = CasEleve.objects.create(matricule=lateness.student, name=lateness.student.display,
-                                          demandeur=self.request.user.get_full_name(),
-                                          sanction_decision=sanction,
-                                          explication_commentaire="Ajout automatique.",
-                                          sanction_faite=False,
-                                          datetime_sanction=day,
-                                          created_by=self.request.user
-                                          )
-            cas.visible_by_groups.set(Group.objects.all())
-            lateness.sanction_id = cas.id
-            lateness.save()
 
     def perform_destroy(self, instance):
         if instance.sanction_id:
@@ -174,6 +185,7 @@ class LatenessViewSet(BaseModelViewSet):
             except ObjectDoesNotExist:
                 pass
         super().perform_destroy(instance)
+
 
     def get_group_all_access(self):
         return get_settings().all_access.all()

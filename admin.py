@@ -19,7 +19,8 @@
 
 from django.contrib import admin
 
-from .models import LatenessModel, LatenessSettingsModel
+from .models import LatenessModel, LatenessSettingsModel, SanctionTriggerModel
 
 admin.site.register(LatenessModel)
 admin.site.register(LatenessSettingsModel)
+admin.site.register(SanctionTriggerModel)
