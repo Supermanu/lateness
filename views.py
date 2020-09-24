@@ -176,7 +176,7 @@ class LatenessViewSet(BaseModelViewSet):
                 context=context
             )
 
-    def perform_destroy(self, instance):
+    def remove_sanction(self, instance):
         if instance.sanction_id:
             from dossier_eleve.models import CasEleve
 
@@ -184,8 +184,17 @@ class LatenessViewSet(BaseModelViewSet):
                 CasEleve.objects.get(id=instance.sanction_id).delete()
             except ObjectDoesNotExist:
                 pass
+            instance.sanction_id = None
+            instance.save()
+
+    def perform_destroy(self, instance):
+        self.remove_sanction(instance)
         super().perform_destroy(instance)
 
+    def perform_update(self, serializer):
+        instance = serializer.save() 
+        if instance.sanction_id and instance.justified:
+            self.remove_sanction(instance)
 
     def get_group_all_access(self):
         return get_settings().all_access.all()

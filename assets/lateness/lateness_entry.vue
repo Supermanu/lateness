@@ -128,7 +128,12 @@ export default {
             }, 5000);
         },
         updateJustified: function (event) {
-            axios.put(`/lateness/api/lateness/${this.lateness.id}/`, {justified: event}, token);
+            const data = {justified: event};
+            if (event && this.lateness.has_sanction) {
+                data.has_sanction = false;
+                this.sanction = null;
+            }
+            axios.put(`/lateness/api/lateness/${this.lateness.id}/`, data, token);
         }
     },
     mounted: function () {
