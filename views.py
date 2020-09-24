@@ -94,9 +94,18 @@ class LatenessViewSet(BaseModelViewSet):
     def perform_create(self, serializer):
         lateness = serializer.save()
         printing = self.request.query_params.get('print', None)
-        if get_settings().printer and printing:
+
+        lateness_settings = get_settings()
+
+        lateness_count = self.get_queryset().filter(
+            student=lateness.student,
+            justified=False,
+            datetime_creation__gte=lateness_settings.date_count_start
+        ).count()
+
+        if lateness_settings.printer and printing:
             try:
-                printer = Network(get_settings().printer) if not settings.DEBUG else Dummy()
+                printer = Network(lateness_settings.printer) if not settings.DEBUG else Dummy()
                 printer.charcode('USA')
                 printer.set(align='CENTER', text_type='B')
                 printer.text('RETARD\n')
@@ -105,10 +114,7 @@ class LatenessViewSet(BaseModelViewSet):
 
                 count_or_justified = "Retard justifié" if lateness.justified else "Nombre de retards: "
                 if not lateness.justified:
-                    count_or_justified += "%i" % self.get_queryset().filter(
-                        student=lateness.student,
-                        justified=False
-                    ).count()
+                    count_or_justified += "%i" % lateness_count
 
                 printer.text('\n%s %s\n%s\n%s\n%s\nBonne journée !' % (
                     lateness.student.last_name,
@@ -126,7 +132,7 @@ class LatenessViewSet(BaseModelViewSet):
 
         if get_settings().notify_responsible:
             responsibles = get_resp_emails(lateness.student)
-            context = {"lateness": lateness}
+            context = {"lateness": lateness, "lateness_count": lateness_count}
             send_email(
                 responsibles,
                 "[Retard]  %s %s" % (lateness.student.fullname, lateness.student.classe.compact_str),
