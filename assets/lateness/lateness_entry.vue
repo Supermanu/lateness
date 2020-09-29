@@ -48,6 +48,13 @@
                     >
                         {{ lateness.lateness_count }}
                     </b-badge>
+                    <b-btn
+                        variant="link"
+                        size="sm"
+                        @click="filterStudent"
+                    >
+                        <b-icon icon="funnel" />
+                    </b-btn>
                 </b-col>
                 <b-col sm="2">
                     <div class="text-right d-flex">
@@ -146,7 +153,10 @@ export default {
                 this.sanction = null;
             }
             axios.put(`/lateness/api/lateness/${this.lateness.id}/`, data, token);
-        }
+        },
+        filterStudent: function () {
+            this.$emit("filterStudent", this.lateness.student_id);
+        },
     },
     mounted: function () {
         if (!this.lateness.sanction_id) return;

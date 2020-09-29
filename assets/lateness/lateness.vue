@@ -163,6 +163,7 @@
                         :lateness="lateness"
                         ref="entries"
                         @delete="askDelete(lateness)"
+                        @filterStudent="filterStudent($event)"
                     />
                 </b-col>
             </b-row>
@@ -199,10 +200,11 @@
 import Quagga from "@ericblade/quagga2";
 
 import Vue from "vue";
-import BootstrapVue from "bootstrap-vue";
+import { BootstrapVue, BootstrapVueIcons } from "bootstrap-vue";
 import "bootstrap-vue/dist/bootstrap-vue.css";
 
 Vue.use(BootstrapVue);
+Vue.use(BootstrapVueIcons);
 
 import Multiselect from "vue-multiselect";
 import "vue-multiselect/dist/vue-multiselect.min.css";
@@ -241,6 +243,13 @@ export default {
         };
     },
     methods: {
+        filterStudent: function (matricule) {
+            this.showFilters = true;
+            this.$store.commit("addFilter",
+                {filterType: "student__matricule", tag: matricule, value: matricule}
+            );
+            this.applyFilter();
+        },
         askDelete: function (entry) {
             this.currentEntry = entry;
             this.$refs.deleteModal.show();
