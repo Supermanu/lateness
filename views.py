@@ -149,10 +149,11 @@ class LatenessViewSet(BaseModelViewSet):
             teaching=lateness.student.teaching,
             year__year=lateness.student.classe.year
         ):
-            if self.get_queryset().filter(
-                student=lateness.student,
-                justified=False
-            ).count() % trigger.lateness_count_trigger != 0:
+            count_first = trigger.lateness_count_trigger_first
+            count_trigger = trigger.lateness_count_trigger
+            if lateness_count < count_first or (
+                lateness_count > count_first and (lateness_count - count_first) % count_trigger != 0
+            ):
                 continue
 
             lateness.has_sanction = True

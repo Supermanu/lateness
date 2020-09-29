@@ -36,6 +36,7 @@ class LatenessSettingsModel(models.Model):
 
 class SanctionTriggerModel(models.Model):
     WEEK_DAY_CHOICES = [
+        (None, "Choisir un jour de la semaine"),
         (1, "Lundi"),
         (2, "Mardi"),
         (3, "Mercredi"),
@@ -45,6 +46,7 @@ class SanctionTriggerModel(models.Model):
     ]
     teaching = models.ForeignKey(TeachingModel, on_delete=models.CASCADE)
     sanction_id = models.PositiveIntegerField(null=True, blank=True)
+    lateness_count_trigger_first = models.PositiveSmallIntegerField(default=4)
     lateness_count_trigger = models.PositiveSmallIntegerField(default=3)
     year = models.ManyToManyField(YearModel, blank=True)
     only_warn = models.BooleanField(default=False)
