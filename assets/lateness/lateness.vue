@@ -85,7 +85,7 @@
             <b-row>
                 <b-col
                     v-if="$store.state.settings.printer.length > 0"
-                    cols="6"
+                    cols="5"
                     md="4"
                 >
                     <b-card
@@ -99,7 +99,7 @@
                     </b-card>
                 </b-col>
                 <b-col
-                    cols="6"
+                    cols="5"
                     md="4"
                 >
                     <b-card
@@ -111,6 +111,37 @@
                             Retard justifié
                         </b-form-checkbox>
                     </b-card>
+                </b-col>
+                <b-col
+                    cols="2"
+                >
+                    <b-button
+                        variant="outline-secondary"
+                        v-b-toggle.filters
+                    >
+                        <icon
+                            name="search"
+                            scale="1"
+                        />
+                        Filtres
+                    </b-button>
+                </b-col>
+            </b-row>
+            <b-row>
+                <b-col>
+                    <b-collapse
+                        id="filters"
+                        v-model="showFilters"
+                    >
+                        <b-card>
+                            <filters
+                                app="lateness"
+                                model="lateness"
+                                ref="filters"
+                                @update="applyFilter"
+                            />
+                        </b-card>
+                    </b-collapse>
                 </b-col>
             </b-row>
             <b-row>
@@ -183,6 +214,8 @@ Vue.component("icon", Icon);
 import axios from "axios";
 
 import Menu from "assets/common/menu.vue";
+import Filters from "assets/common/filters.vue";
+import {getFilters} from "assets/common/filters.js";
 import LatenessEntry from "./lateness_entry.vue";
 
 const token = { xsrfCookieName: "csrftoken", xsrfHeaderName: "X-CSRFToken"};
@@ -196,6 +229,8 @@ export default {
             searchId: -1,
             searchOptions: [],
             searchLoading: false,
+            showFilters: false,
+            filter: "",
             latenesses: [],
             entriesCount: 0,
             currentPage: 1,
@@ -301,8 +336,12 @@ export default {
                     this.addingStudent = false;
                 });
         },
+        applyFilter: function () {
+            this.filter = getFilters(this.$store.state.filters);
+            this.loadEntries();
+        },
         loadEntries: function () {
-            axios.get("/lateness/api/lateness/?ordering=-datetime_creation&page=" + this.currentPage, token)
+            axios.get(`/lateness/api/lateness/?ordering=-datetime_creation${this.filter}&page=${this.currentPage}`, token)
                 .then(response => {
                     this.latenesses = response.data.results;
                     this.entriesCount = response.data.count;
@@ -386,6 +425,7 @@ export default {
         "multiselect": Multiselect,
         "app-menu": Menu,
         "lateness-entry": LatenessEntry,
+        "filters": Filters,
     }
 };
 </script>

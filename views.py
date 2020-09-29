@@ -29,11 +29,13 @@ from django.db.models import ObjectDoesNotExist
 from django.utils import timezone
 from django.conf import settings
 
+from django_filters import rest_framework as filters
+
 from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
 
 from core.models import TeachingModel
 from core.utilities import get_menu
-from core.views import BaseModelViewSet
+from core.views import BaseModelViewSet, BaseFilters
 from core.email import get_resp_emails, send_email
 
 from .models import LatenessSettingsModel, LatenessModel, SanctionTriggerModel
@@ -69,7 +71,8 @@ class LatenessView(LoginRequiredMixin,
     template_name = "lateness/lateness.html"
     permission_required = ('lateness.view_latenessmodel')
     filters = [
-
+        {'value': 'student__display', 'text': 'Nom'},
+        {'value': 'student__matricule', 'text': 'Matricule'},
     ]
 
     def get_context_data(self, **kwargs):
@@ -81,11 +84,24 @@ class LatenessView(LoginRequiredMixin,
         return context
 
 
+class LatenessFilter(BaseFilters):
+    student__display = filters.CharFilter(method='people_name_by')
+
+    class Meta:
+        fields_to_filter = [
+            'student__matricule',
+        ]
+        model = LatenessModel
+        fields = BaseFilters.Meta.generate_filters(fields_to_filter)
+        filter_overrides = BaseFilters.Meta.filter_overrides
+
+
 class LatenessViewSet(BaseModelViewSet):
     queryset = LatenessModel.objects.all()
     serializer_class = LatenessSerializer
     permission_classes = (IsAuthenticated, DjangoModelPermissions,)
     ordering_fields = ('datetime_update', 'datetime_creation',)
+    filter_class = LatenessFilter
     username_field = None
 
     def get_queryset(self):
