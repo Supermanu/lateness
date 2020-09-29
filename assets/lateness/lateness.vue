@@ -19,8 +19,14 @@
 
 <template>
     <div>
-        <div class="loading" v-if="!loaded"></div>
-        <app-menu v-if="loaded" :menu-info="menuInfo"></app-menu>
+        <div
+            class="loading"
+            v-if="!loaded"
+        />
+        <app-menu
+            v-if="loaded"
+            :menu-info="menuInfo"
+        />
         <b-container v-if="loaded">
             <h1>Retards des élèves</h1>
             <b-row class="mb-1">
@@ -30,7 +36,7 @@
                 >
                     <multiselect
                         ref="input"
-                        :showNoOptions="false"
+                        :show-no-options="false"
                         :internal-search="false"
                         :options="searchOptions"
                         @search-change="getSearchOptions"
@@ -46,9 +52,22 @@
                         <span slot="noResult">Aucune personne trouvée.</span>
                     </multiselect>
                 </b-col>
-                <b-col cols="3" sm="2" class="mt-1 mt-md-0">
-                    <b-button :disabled="!search || addingStudent" @click="addStudent">
-                        <icon v-if="addingStudent" name="spinner" scale="1" spin class="align-baseline"></icon>
+                <b-col
+                    cols="3"
+                    sm="2"
+                    class="mt-1 mt-md-0"
+                >
+                    <b-button
+                        :disabled="!search || addingStudent"
+                        @click="addStudent"
+                    >
+                        <icon
+                            v-if="addingStudent"
+                            name="spinner"
+                            scale="1"
+                            spin
+                            class="align-baseline"
+                        />
                         Ajouter
                     </b-button>
                 </b-col>
@@ -58,7 +77,9 @@
                     sm="2"
                     class="mt-1 mt-md-0"
                 >
-                    <b-btn @click="scanCode">Scanner</b-btn>
+                    <b-btn @click="scanCode">
+                        Scanner
+                    </b-btn>
                 </b-col>
             </b-row>
             <b-row>
@@ -69,7 +90,8 @@
                 >
                     <b-card
                         bg-variant="light"
-                        no-body class="p-2"
+                        no-body
+                        class="p-2"
                     >
                         <b-form-checkbox v-model="printing">
                             Imprimer le retard
@@ -80,61 +102,90 @@
                     cols="6"
                     md="4"
                 >
-                    <b-card bg-variant="light" no-body class="p-2">
-                    <b-form-checkbox v-model="justified">
-                        Retard justifié
-                    </b-form-checkbox>
+                    <b-card
+                        bg-variant="light"
+                        no-body
+                        class="p-2"
+                    >
+                        <b-form-checkbox v-model="justified">
+                            Retard justifié
+                        </b-form-checkbox>
                     </b-card>
                 </b-col>
             </b-row>
             <b-row>
                 <b-col>
-                    <b-pagination class="mt-1" :total-rows="entriesCount" v-model="currentPage" @change="changePage" :per-page="20">
-                    </b-pagination>
+                    <b-pagination
+                        class="mt-1"
+                        :total-rows="entriesCount"
+                        v-model="currentPage"
+                        @change="changePage"
+                        :per-page="20"
+                    />
                 </b-col>
             </b-row>
             <b-row>
                 <b-col>
-                    <lateness-entry v-for="lateness in latenesses" :key="lateness.id"
-                        :lateness="lateness" ref="entries" @delete="askDelete(lateness)">
-                    </lateness-entry>
+                    <lateness-entry
+                        v-for="lateness in latenesses"
+                        :key="lateness.id"
+                        :lateness="lateness"
+                        ref="entries"
+                        @delete="askDelete(lateness)"
+                    />
                 </b-col>
             </b-row>
-            <b-modal ref="deleteModal" cancel-title="Annuler" hide-header centered
-                @ok="deleteEntry" @cancel="currentEntry = null"
-                :no-close-on-backdrop="true" :no-close-on-esc="true">
+            <b-modal
+                ref="deleteModal"
+                cancel-title="Annuler"
+                hide-header
+                centered
+                @ok="deleteEntry"
+                @cancel="currentEntry = null"
+                :no-close-on-backdrop="true"
+                :no-close-on-esc="true"
+            >
                 Êtes-vous sûr de vouloir supprimer ce passage ?
             </b-modal>
-            <b-modal ref="scanModal" hide-footer centered no-fade
-                size="xl" @hidden="closeQuagga">
-                <div id="interactive" class="viewport"></div>
+            <b-modal
+                ref="scanModal"
+                hide-footer
+                centered
+                no-fade
+                size="xl"
+                @hidden="closeQuagga"
+            >
+                <div
+                    id="interactive"
+                    class="viewport"
+                />
             </b-modal>
         </b-container>
     </div>
 </template>
 
 <script>
-import Quagga from '@ericblade/quagga2';
+import Quagga from "@ericblade/quagga2";
 
-import Vue from 'vue';
-import BootstrapVue from 'bootstrap-vue'
-import 'bootstrap-vue/dist/bootstrap-vue.css'
+import Vue from "vue";
+import BootstrapVue from "bootstrap-vue";
+import "bootstrap-vue/dist/bootstrap-vue.css";
 
 Vue.use(BootstrapVue);
 
-import Multiselect from 'vue-multiselect'
-import 'vue-multiselect/dist/vue-multiselect.min.css'
+import Multiselect from "vue-multiselect";
+import "vue-multiselect/dist/vue-multiselect.min.css";
 
-import 'vue-awesome/icons'
-import Icon from 'vue-awesome/components/Icon.vue'
-Vue.component('icon', Icon);
+import "vue-awesome/icons";
+import Icon from "vue-awesome/components/Icon.vue";
+Vue.component("icon", Icon);
 
-import axios from 'axios';
+import axios from "axios";
 
-import Menu from 'assets/common/menu.vue'
-import LatenessEntry from './lateness_entry.vue'
+import Menu from "assets/common/menu.vue";
+import LatenessEntry from "./lateness_entry.vue";
 
-const token = { xsrfCookieName: 'csrftoken', xsrfHeaderName: 'X-CSRFToken'};
+const token = { xsrfCookieName: "csrftoken", xsrfHeaderName: "X-CSRFToken"};
 
 export default {
     data: function () {
@@ -152,7 +203,7 @@ export default {
             addingStudent: false,
             printing: true,
             justified: false,
-        }
+        };
     },
     methods: {
         askDelete: function (entry) {
@@ -160,10 +211,10 @@ export default {
             this.$refs.deleteModal.show();
         },
         deleteEntry: function () {
-            axios.delete('/lateness/api/lateness/' + this.currentEntry.id, token)
-            .then(response => {
-                this.loadEntries();
-            });
+            axios.delete("/lateness/api/lateness/" + this.currentEntry.id, token)
+                .then(() => {
+                    this.loadEntries();
+                });
 
             this.currentEntry = null;
         },
@@ -175,29 +226,29 @@ export default {
             const data = {
                 query: query,
                 teachings: this.$store.state.teachings,
-                people: 'student',
+                people: "student",
                 check_access: false,
             };
-            axios.post('/annuaire/api/people/', data, token)
-            .then(response => {
-                if (this.searchId !== currentSearch)
-                    return;
+            axios.post("/annuaire/api/people/", data, token)
+                .then(response => {
+                    if (this.searchId !== currentSearch)
+                        return;
                 
-                this.searchOptions = response.data;
-            })
+                    this.searchOptions = response.data;
+                });
         },
         selectStudent: function (matricule) {
-            axios.get('/annuaire/api/student/' + matricule + '/')
-            .then(resp => {
-                if (resp.data) {
-                    this.search = resp.data;
-                    this.addStudent();
-                }
-            })
-            .catch(err => {
-                console.log("Aucun étudiant trouvé");
-                this.addingStudent = false;
-            })
+            axios.get("/annuaire/api/student/" + matricule + "/")
+                .then(resp => {
+                    if (resp.data) {
+                        this.search = resp.data;
+                        this.addStudent();
+                    }
+                })
+                .catch(() => {
+                    console.log("Aucun étudiant trouvé");
+                    this.addingStudent = false;
+                });
         },
         overloadInput: function () {
             setTimeout(() => {
@@ -206,19 +257,19 @@ export default {
                 if (refInput) {
                     let input = refInput.$refs.search;
                     input.focus();
-                    input.addEventListener('keypress', (e) => {
-                        if (e.key == 'Enter') {
+                    input.addEventListener("keypress", (e) => {
+                        if (e.key == "Enter") {
                             if (refInput.search && refInput.search.length > 1 && !isNaN(refInput.search)) {
                                 this.selectStudent(refInput.search);
                                 refInput.search = "";
                             }
                         }
-                    })
+                    });
                     return input;
                 } else {
                     this.overloadInput();
                 }
-            }, 300)
+            }, 300);
             
         },
         addStudent: function () {
@@ -251,17 +302,17 @@ export default {
                 });
         },
         loadEntries: function () {
-            axios.get('/lateness/api/lateness/?ordering=-datetime_creation&page=' + this.currentPage, token)
-            .then(response => {
-                this.latenesses = response.data.results;
-                this.entriesCount = response.data.count;
-                this.loaded = true;
+            axios.get("/lateness/api/lateness/?ordering=-datetime_creation&page=" + this.currentPage, token)
+                .then(response => {
+                    this.latenesses = response.data.results;
+                    this.entriesCount = response.data.count;
+                    this.loaded = true;
                 
-            })
-            .catch(err => {
-                alert(err);
-                this.loaded = true;
-            })
+                })
+                .catch(err => {
+                    alert(err);
+                    this.loaded = true;
+                });
         },
         changePage: function (page) {
             this.currentPage = page;
@@ -326,16 +377,17 @@ export default {
         }
     },
     mounted: function () {
+        // eslint-disable-next-line no-undef
         this.menuInfo = menu;
         this.loadEntries();
         this.overloadInput();        
     },
     components: {
-        'multiselect': Multiselect,
-        'app-menu': Menu,
-        'lateness-entry': LatenessEntry,
+        "multiselect": Multiselect,
+        "app-menu": Menu,
+        "lateness-entry": LatenessEntry,
     }
-}
+};
 </script>
 
 <style>

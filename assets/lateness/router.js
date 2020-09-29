@@ -17,18 +17,18 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with Happyschool.  If not, see <http://www.gnu.org/licenses/>.
 
-import Vue from 'vue';
-import VueRouter from 'vue-router';
+import Vue from "vue";
+import VueRouter from "vue-router";
 
 Vue.use(VueRouter);
 
-import Lateness from './lateness.vue';
+import Lateness from "./lateness.vue";
 
 export default new VueRouter({
     routes: [
-    {
-        path: '',
-        component: Lateness,
-    }
-]
+        {
+            path: "",
+            component: Lateness,
+        }
+    ]
 });

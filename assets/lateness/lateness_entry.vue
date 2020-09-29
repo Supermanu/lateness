@@ -21,8 +21,15 @@
     <div>
         <b-card @click="displayPhoto">
             <b-row>
-                <b-col cols="2" v-if="showPhoto">
-                    <b-img :src="`/static/photos/${lateness.student_id}.jpg`" fluid alt="Photo de l'élève"></b-img>
+                <b-col
+                    cols="2"
+                    v-if="showPhoto"
+                >
+                    <b-img
+                        :src="`/static/photos/${lateness.student_id}.jpg`"
+                        fluid
+                        alt="Photo de l'élève"
+                    />
                 </b-col>
                 <b-col>
                     <icon
@@ -31,7 +38,7 @@
                         class="align-text-bottom"
                     />
                     <strong>{{ niceDate }}</strong>:
-                    <a :href='`/annuaire/#/person/student/${lateness.student.matricule}/`'>
+                    <a :href="`/annuaire/#/person/student/${lateness.student.matricule}/`">
                         {{ lateness.student.display }}
                     </a>
                     <b-badge
@@ -94,30 +101,35 @@
 </template>
 
 <script>
-import Vue from 'vue';
+import Vue from "vue";
 
 import axios from "axios";
 
-import Moment from 'moment';
-Moment.locale('fr');
+import Moment from "moment";
+Moment.locale("fr");
 
-import 'vue-awesome/icons'
-import Icon from 'vue-awesome/components/Icon.vue'
-Vue.component('icon', Icon);
+import "vue-awesome/icons";
+import Icon from "vue-awesome/components/Icon.vue";
+Vue.component("icon", Icon);
 
-const token = { xsrfCookieName: 'csrftoken', xsrfHeaderName: 'X-CSRFToken'};
+const token = { xsrfCookieName: "csrftoken", xsrfHeaderName: "X-CSRFToken"};
 
 export default {
-    props: ["lateness"],
+    props: {
+        lateness: {
+            type: Object,
+            default: () => {}
+        }
+    },
     data: function () {
         return {
             showPhoto: false,
             sanction: null,
-        }
+        };
     },
     computed: {
         niceDate: function () {
-            return Moment(this.lateness.datetime_creation).format('HH:mm DD/MM');
+            return Moment(this.lateness.datetime_creation).format("HH:mm DD/MM");
         }
     },
     methods: {
@@ -159,5 +171,5 @@ export default {
                     });
             });
     }
-}
+};
 </script>
