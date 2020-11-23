@@ -25,7 +25,7 @@ from escpos.printer import Network, Dummy
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
 from django.views.generic import TemplateView
 from django.contrib.auth.models import Group
-from django.db.models import ObjectDoesNotExist
+from django.db.models import ObjectDoesNotExist, Count
 from django.utils import timezone
 from django.conf import settings
 
@@ -73,6 +73,7 @@ class LatenessView(LoginRequiredMixin,
     filters = [
         {'value': 'student__display', 'text': 'Nom'},
         {'value': 'student__matricule', 'text': 'Matricule'},
+        {'value': 'count_lateness', 'text': 'Nombre de retard'},
     ]
 
     def get_context_data(self, **kwargs):
@@ -86,6 +87,7 @@ class LatenessView(LoginRequiredMixin,
 
 class LatenessFilter(BaseFilters):
     student__display = filters.CharFilter(method='people_name_by')
+    count_lateness = filters.NumberFilter(method="count_lateness_by")
 
     class Meta:
         fields_to_filter = [
@@ -94,6 +96,13 @@ class LatenessFilter(BaseFilters):
         model = LatenessModel
         fields = BaseFilters.Meta.generate_filters(fields_to_filter)
         filter_overrides = BaseFilters.Meta.filter_overrides
+
+    def count_lateness_by(self, queryset, field_name, value):
+        counting = LatenessModel.objects.filter(justified=False) \
+            .values("student") \
+            .annotate(count_lateness=Count("student")) \
+            .filter(count_lateness__gte=value).values_list("student", flat=True)
+        return LatenessModel.objects.filter(student__in=counting)
 
 
 class LatenessViewSet(BaseModelViewSet):
