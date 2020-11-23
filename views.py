@@ -102,7 +102,7 @@ class LatenessFilter(BaseFilters):
             .values("student") \
             .annotate(count_lateness=Count("student")) \
             .filter(count_lateness__gte=value).values_list("student", flat=True)
-        return LatenessModel.objects.filter(student__in=counting)
+        return LatenessModel.objects.filter(student__in=counting, justified=False)
 
 
 class LatenessViewSet(BaseModelViewSet):
