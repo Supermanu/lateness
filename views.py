@@ -98,7 +98,8 @@ class LatenessFilter(BaseFilters):
         filter_overrides = BaseFilters.Meta.filter_overrides
 
     def count_lateness_by(self, queryset, field_name, value):
-        counting = LatenessModel.objects.filter(justified=False) \
+        date_from = get_settings().date_count_start
+        counting = LatenessModel.objects.filter(justified=False, datetime_creation__gte=date_from) \
             .values("student") \
             .annotate(count_lateness=Count("student")) \
             .filter(count_lateness__gte=value).values_list("student", flat=True)
