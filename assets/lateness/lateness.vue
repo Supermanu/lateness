@@ -112,36 +112,17 @@
                         </b-form-checkbox>
                     </b-card>
                 </b-col>
-                <b-col
-                    cols="2"
-                >
-                    <b-button
-                        variant="outline-secondary"
-                        v-b-toggle.filters
-                    >
-                        <icon
-                            name="search"
-                            scale="1"
-                        />
-                        Filtres
-                    </b-button>
-                </b-col>
             </b-row>
             <b-row>
                 <b-col>
-                    <b-collapse
-                        id="filters"
-                        v-model="showFilters"
-                    >
-                        <b-card>
-                            <filters
-                                app="lateness"
-                                model="lateness"
-                                ref="filters"
-                                @update="applyFilter"
-                            />
-                        </b-card>
-                    </b-collapse>
+                    <filters
+                        app="lateness"
+                        model="lateness"
+                        ref="filters"
+                        @update="applyFilter"
+                        :show-search="showFilters"
+                        @toggleSearch="showFilters = !showFilters"
+                    />
                 </b-col>
             </b-row>
             <b-row>
@@ -248,6 +229,7 @@ export default {
             this.$store.commit("addFilter",
                 {filterType: "student__matricule", tag: matricule, value: matricule}
             );
+            this.currentPage = 1;
             this.applyFilter();
         },
         askDelete: function (entry) {
