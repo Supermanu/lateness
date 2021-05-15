@@ -42,8 +42,8 @@ from .models import LatenessSettingsModel, LatenessModel, SanctionTriggerModel
 from .serializers import LatenessSettingsSerializer, LatenessSerializer
 
 
-def get_menu_entry(active_app, user):
-    if not user.has_perm('lateness.view_latenessmodel'):
+def get_menu_entry(active_app, request):
+    if not request.user.has_perm('lateness.view_latenessmodel'):
         return {}
     return {
             "app": "lateness",
@@ -78,7 +78,7 @@ class LatenessView(LoginRequiredMixin,
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
-        context['menu'] = json.dumps(get_menu(self.request.user, "lateness"))
+        context['menu'] = json.dumps(get_menu(self.request, "lateness"))
         context['filters'] = json.dumps(self.filters)
         context['settings'] = json.dumps((LatenessSettingsSerializer(get_settings()).data))
 
