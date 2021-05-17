@@ -21,6 +21,7 @@ import json
 import datetime
 
 from escpos.printer import Network, Dummy
+from unidecode import unidecode
 
 from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
 from django.views.generic import TemplateView
@@ -142,8 +143,8 @@ class LatenessViewSet(BaseModelViewSet):
                     count_or_justified += "%i" % lateness_count
 
                 printer.text('\n%s %s\n%s\n%s\n%s\nBonne journée !' % (
-                    lateness.student.last_name,
-                    lateness.student.first_name,
+                    unidecode(lateness.student.last_name),
+                    unidecode(lateness.student.first_name),
                     lateness.student.classe.compact_str,
                     absence_dt.strftime("%H:%M - %d/%m/%Y"),
                     count_or_justified
